@@ -5,6 +5,7 @@ private String date;
 private String title;
 private String note;
 
+
     public Notes(String date, String title, String note) {
         this.date = date;
         this.title = title;

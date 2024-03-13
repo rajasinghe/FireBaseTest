@@ -170,14 +170,9 @@ public class MainActivity extends AppCompatActivity {
                     .into(binding.profilePicture);
     }
 
-    public class Data implements Serializable{
-        FirebaseUser logedInUser;
-        public Data(FirebaseUser logedInUser) {
-            this.logedInUser = logedInUser;
-        }
-        public FirebaseUser getLogedInUser() {
-            return logedInUser;
-        }
+    void googleSignIn(){
+
     }
+
 }
 
