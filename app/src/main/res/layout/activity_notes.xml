@@ -9,8 +9,10 @@
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/notes"
-        android:layout_width="wrap_content"
+        android:layout_width="175dp"
         android:layout_height="match_parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.066"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:listitem="@layout/notes_item" />
@@ -29,8 +31,8 @@
 
     <EditText
         android:id="@+id/note_body"
-        android:layout_width="242dp"
-        android:layout_height="512dp"
+        android:layout_width="214dp"
+        android:layout_height="479dp"
         android:layout_marginTop="16dp"
         android:gravity="start|top"
         android:inputType="textMultiLine"

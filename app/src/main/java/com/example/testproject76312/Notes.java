@@ -5,12 +5,8 @@ private String date;
 private String title;
 private String note;
 
+private String id;
 
-    public Notes(String date, String title, String note) {
-        this.date = date;
-        this.title = title;
-        this.note = note;
-    }
 
     public String getDate() {
         return date;
@@ -33,6 +29,27 @@ private String note;
     }
 
     public void setNote(String note) {
+        this.note = note;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public Notes(String date, String title, String note, String id) {
+        this.date = date;
+        this.title = title;
+        this.note = note;
+        this.id = id;
+    }
+
+    public Notes(String date, String title, String note) {
+        this.date = date;
+        this.title = title;
         this.note = note;
     }
 }
