@@ -56,6 +56,18 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+        binding.signUp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                normalSignUp(binding.emailField.getText().toString(),binding.passwordField.getText().toString());
+            }
+        });
+        binding.signIn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                noramlSignIn(binding.emailField.getText().toString(),binding.passwordField.getText().toString());
+            }
+        });
         binding.googleSignIn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -172,6 +184,38 @@ public class MainActivity extends AppCompatActivity {
 
     void googleSignIn(){
 
+    }
+
+    void normalSignUp(String email,String password){
+        Log.d(TAG, "normalSignUp: "+email);
+        mAuth.createUserWithEmailAndPassword(email,password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+            @Override
+            public void onComplete(@NonNull Task<AuthResult> task) {
+                FirebaseUser user=mAuth.getCurrentUser();
+                updateUi(user);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.e(TAG, "onFailure: user creation failed",e);
+            }
+        });
+    }
+
+    void noramlSignIn(String email,String password){
+        mAuth.signInWithEmailAndPassword(email,password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+            @Override
+            public void onComplete(@NonNull Task<AuthResult> task) {
+                FirebaseUser user=mAuth.getCurrentUser();
+                updateUi(user);
+                Log.d(TAG, "onComplete: "+user.getEmail());
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.e(TAG, "onFailure: sign up with credentials failed",e);
+            }
+        });
     }
 
 }

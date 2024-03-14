@@ -52,4 +52,7 @@ private String id;
         this.title = title;
         this.note = note;
     }
+    public Notes(){
+        //empty constructor
+    }
 }
