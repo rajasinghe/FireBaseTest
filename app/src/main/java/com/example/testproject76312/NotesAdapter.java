@@ -8,12 +8,17 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.card.MaterialCardView;
+
 import java.util.ArrayList;
 
 public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder>{
     private ArrayList<Notes> notes;
-    public NotesAdapter(ArrayList<Notes> notes){
-            this.notes=notes;
+    private onItemClickListener clickListener;
+
+    public NotesAdapter(ArrayList<Notes> notes, onItemClickListener clickListener) {
+        this.notes = notes;
+        this.clickListener = clickListener;
     }
 
     @NonNull
@@ -25,8 +30,15 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder>{
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            holder.getDate().setText((CharSequence) notes.get(position).getDate());
+            holder.getDate().setText(notes.get(position).getDate());
             holder.getTitle().setText(notes.get(position).getTitle());
+            holder.getCardView().setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    NotesAdapter.this.clickListener.onItemClick(position);
+                }
+            });
+
     }
 
     @Override
@@ -37,10 +49,12 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder>{
     public static class ViewHolder  extends RecyclerView.ViewHolder{
         private final TextView date;
         private final TextView title;
+        private final MaterialCardView cardView;
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            date=itemView.findViewById(R.id.notes_item_date);
-            title=itemView.findViewById(R.id.notes_item_title);
+            date=(TextView) itemView.findViewById(R.id.notes_item_date);
+            title=(TextView) itemView.findViewById(R.id.notes_item_title);
+            cardView=(MaterialCardView) itemView.findViewById(R.id.item_card);
         }
 
         public TextView getDate() {
@@ -50,5 +64,13 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder>{
         public TextView getTitle() {
             return title;
         }
+
+        public MaterialCardView getCardView() {
+            return cardView;
+        }
+    }
+
+    public interface onItemClickListener{
+        void onItemClick(int position);
     }
 }

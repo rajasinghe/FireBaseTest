@@ -1,7 +1,9 @@
 package com.example.testproject76312;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
@@ -15,6 +17,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -34,23 +37,27 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 
-public class NotesActivity extends AppCompatActivity {
+public class NotesActivity extends AppCompatActivity implements NotesAdapter.onItemClickListener{
     FirebaseDatabase database;
     ActivityNotesBinding binding;
     String TAG="NotesActivity";
+    NotesAdapter notesListAdapter;
     private FirebaseAuth mAuth;
     private FirebaseUser user;
-
+    DatabaseReference userNoteReference;
     ArrayList<Notes> notesArrayList;
     String UID;
+
+    @Override
+    public void onItemClick(int position) {
+        Toast.makeText(this, position+"", Toast.LENGTH_SHORT).show();
+        //need to implement the notes data in the creating notes section
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding=ActivityNotesBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        database=FirebaseDatabase.getInstance();
-        init();
-
         binding.addNotes.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -63,13 +70,18 @@ public class NotesActivity extends AppCompatActivity {
 
 
     }
+
     void createNote(String title,String note){
         DatabaseReference notesReference=database.getReference();
         Date currentDate=new Date();
         SimpleDateFormat simpleDateFormat=new SimpleDateFormat("yyyy-MM-dd");
         String dateStamp=simpleDateFormat.format(currentDate);
         Notes noteData=new Notes(dateStamp,title,note);
-        notesReference.child("users").child(user.getUid()).child("notes").push().setValue(noteData);
+        String key=notesReference.child("users").child(user.getUid()).child("notes").push().getKey();
+        Log.d(TAG, "createNote: "+key);
+        Map<String,Object> childUpdates=new HashMap<>();
+        childUpdates.put("/users/"+user.getUid()+"/notes/"+key,noteData);
+        notesReference.updateChildren(childUpdates);
     }
 
     @Override
@@ -79,48 +91,67 @@ public class NotesActivity extends AppCompatActivity {
         user=mAuth.getCurrentUser();
        if(user!=null){ UID=user.getUid();
            Log.d(TAG, "onStart: "+UID);
-           getNotesFromDb();
-           Log.d(TAG, "onStart: "+notesArrayList.size());
-           NotesAdapter adapter=new NotesAdapter(notesArrayList);
-           RecyclerView recyclerView=findViewById(R.id.notes);
-           recyclerView.setAdapter(adapter);
+           getNotesFromDbAndSetToRecycler();
        }else{
            Log.d(TAG, "onStart: "+"account not exists");
        };
 
     }
-    public void getNotesFromDb(){
-        database.getReference("users").child(user.getUid()).child("notes").get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<DataSnapshot> task) {
-                Log.d(TAG, "onComplete: "+String.valueOf(task.getResult().getValue()));
-                try{
-                    JSONObject jsonObject=new JSONObject(String.valueOf(task.getResult().getValue()));
-                    Iterator<String> keys=jsonObject.keys();
-                    while(keys.hasNext()){
-                        String key=keys.next();
-                        JSONObject noteObject=jsonObject.getJSONObject(key);
-                        Notes note=new Notes(String.valueOf(noteObject.get("date")),String.valueOf(noteObject.get("title")),String.valueOf(noteObject.get("note")),key);
-                        notesArrayList.add(note);
-                        Log.d(TAG, "onComplete: confirmation uid="+note.getId()+" title="+note.getTitle());
-                    }
-                    setNotesToRecycler(notesArrayList);
-
-                }catch (JSONException e){
-                    Log.e(TAG, "onComplete: "+e);
-                }
-            }
-        });
-
-    }
-    void init(){
+    public void getNotesFromDbAndSetToRecycler(){
+        database=FirebaseDatabase.getInstance();
+        //adapter initialization with empty data
         notesArrayList=new ArrayList<Notes>();
-        DatabaseReference databaseReference=database.getReference();
-        databaseReference.addValueEventListener(new ValueEventListener() {
+        NotesAdapter adapter=new NotesAdapter(notesArrayList,this);
+        binding.notes.setLayoutManager(new LinearLayoutManager(this));
+        binding.notes.setAdapter(adapter);
+        //
+        userNoteReference=database.getReference("users").child(UID).child("notes");
+        userNoteReference.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                // String  value=snapshot.getValue(String.class);
-                // Log.d(TAG, "onDataChange: "+value);
+               /* notesArrayList.clear();
+                for (DataSnapshot notesnapShot:snapshot.getChildren()){
+                    Log.d(TAG, "onDataChange: "+notesnapShot.getKey());
+                    Notes note=new Notes(notesnapShot.child("date").getValue(String.class),notesnapShot.child("title").getValue(String.class),notesnapShot.child("note").getValue(String.class),notesnapShot.getKey());
+                    notesArrayList.add(note);
+                }
+                setNotesToRecycler(notesArrayList);*/
+
+                ///adding the change listener///
+                userNoteReference.addChildEventListener(new ChildEventListener() {
+                    @Override
+                    public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                        Log.d(TAG, "onChildAdded: "+snapshot.getValue().toString()+" key ="+snapshot.getKey());
+                        Notes note=new Notes(snapshot.child("date").getValue(String.class),snapshot.child("title").getValue(String.class),snapshot.child("note").getValue(String.class),snapshot.getKey());
+                        notesArrayList.add(note);
+                        Log.d(TAG, "onChildAdded: "+ notesArrayList.size());
+                        adapter.notifyItemInserted(notesArrayList.size()-1);
+                    }
+
+                    @Override
+                    public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+                    }
+
+                    @Override
+                    public void onChildRemoved(@NonNull DataSnapshot snapshot) {
+
+                    }
+
+                    @Override
+                    public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+
+                    }
+                });
+
+
+                ////
+
             }
 
             @Override
@@ -128,11 +159,9 @@ public class NotesActivity extends AppCompatActivity {
                 Log.d(TAG, "onCancelled: "+error);
             }
         });
+
+
     }
-    void setNotesToRecycler(ArrayList<Notes> notes){
-        Log.d(TAG, "setNotesToRecycler: "+notes.size());
-        NotesAdapter adapter=new NotesAdapter(notes);
-        binding.notes.setAdapter(adapter);
-    }
+
 
 }
